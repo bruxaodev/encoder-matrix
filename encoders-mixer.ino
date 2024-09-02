@@ -18,18 +18,21 @@ struct Encoder {
 
 const int numEncoders = 4;
 Encoder encoders[numEncoders] = {
-  { 9, 8, 10, 0, 1, 2, 0, 0, false },   // Encoder 4
+  { 9, 8, 10, 0, 1, 2, 0, 0, false },    // Encoder 4
   { 14, 15, 16, 3, 4, 5, 0, 0, false },  // Encoder 3
-  {7, 5, 6, 6, 7, 8, 0, 0, false },     // Encoder 2
-  { 4, 2, 3, 9, 10, 11, 0, 0, false }     // Encoder 1
+  { 7, 5, 6, 6, 7, 8, 0, 0, false },     // Encoder 2
+  { 4, 2, 3, 9, 10, 11, 0, 0, false }    // Encoder 1
 };
+
+bool VOLUM_MODE = true;
+int SWITCH_MODE_INDEX = 3;
 
 //JOYSTICK_TYPE_JOYSTICK
 //JOYSTICK_TYPE_GAMEPAD
 //JOYSTICK_TYPE_MULTI_AXIS
 Joystick_ joystick(0x03, JOYSTICK_TYPE_JOYSTICK, 12, 0, false, false, false, false, false, false, false, false, false, false, false);
 
-int VOLUMS[4] = {500,500,500,500};
+int VOLUMS[4] = { 500, 500, 500, 500 };
 
 void setup() {
   for (int i = 0; i < numEncoders; i++) {
@@ -66,11 +69,14 @@ void readEncoder(int encoderIndex) {
 
   if (encoder.keyPushed != aktKey) {
     encoder.keyPushed = aktKey;
-    Serial.println(encoder.keyPushed ? "Key push, Encoder:" + String(encoderIndex) : "Key release, Encoder:" + String(encoderIndex));
+    // Serial.println(encoder.keyPushed ? "Key push, Encoder:" + String(encoderIndex) : "Key release, Encoder:" + String(encoderIndex));
     if (encoder.keyPushed) {
       joystick.pressButton(encoder.encBtnJoy);
     } else {
       joystick.releaseButton(encoder.encBtnJoy);
+      if (encoderIndex == SWITCH_MODE_INDEX) {
+        VOLUM_MODE = !VOLUM_MODE;
+      }
     }
   }
 
@@ -82,28 +88,34 @@ void readEncoder(int encoderIndex) {
     } else {
       if (encoder.pattern == CW) {
         // Serial.println("Turn right, Encoder:" + String(encoderIndex));
-        pushJoyButton(encoder.encCWJoy, encoderIndex);
-        volumeUp(encoderIndex);
+        if (VOLUM_MODE) {
+          volumeUp(encoderIndex);
+        } else {
+          pushJoyButton(encoder.encCWJoy, encoderIndex);
+        }
       } else if (encoder.pattern == CCW) {
         // Serial.println("Turn left, Encoder:" + String(encoderIndex));
-        pushJoyButton(encoder.encCCWJoy, encoderIndex);
-        volumeDown(encoderIndex);
+        if (VOLUM_MODE) {
+          volumeDown(encoderIndex);
+        } else {
+          pushJoyButton(encoder.encCCWJoy, encoderIndex);
+        }
       }
       encoder.pattern = 0;
     }
   }
 }
 
-void volumeUp(int ind){
-  VOLUMS[ind] += 100;
-  if(VOLUMS[ind]>1000){
+void volumeUp(int ind) {
+  VOLUMS[ind] += 50;
+  if (VOLUMS[ind] > 1000) {
     VOLUMS[ind] = 1000;
   }
 }
 
-void volumeDown(int ind){
-  VOLUMS[ind] -= 100;
-  if(VOLUMS[ind] < 0){
+void volumeDown(int ind) {
+  VOLUMS[ind] -= 50;
+  if (VOLUMS[ind] < 0) {
     VOLUMS[ind] = 0;
   }
 }
